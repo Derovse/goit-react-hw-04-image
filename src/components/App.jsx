@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import SearchBar from './Searchbar/Searchbar';
 import Button from '../components/Button/Button';
 import Api from '../service/api';
@@ -7,48 +7,46 @@ import ImageGallery from './ImageGallery/ImageGallery';
 import Modal from './Modal/Modal';
 import css from './App.module.css';
 
-export class App extends Component {
-  state = {
-    name: '',
-    img: [],
-    page: 1,
-    tags: '',
-    totalPages: 0,
-    isLoading: false,
-    modalImg: null,
-    modalTags: '',
+const App = () => {
+  const [name, setName] = useState('');
+  const [img, setImg] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [modalImg, setModalImg] = useState(null);
+  const [modalTags, setModalTags] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      if (!hasSearched) {
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const images = await Api.images(name, page);
+        setImg(prevImages =>
+          page === 1 ? images.hits : [...prevImages, ...images.hits]
+        );
+        setTotalPages(Math.floor(images.totalHits / 12));
+        setIsLoading(false);
+      } catch (error) {
+        setIsLoading(false);
+      }
+    };
+
+    fetchImages();
+  }, [name, page, hasSearched]);
+
+  const onSubmit = newName => {
+    setName(newName);
+    setPage(1);
+    setHasSearched(true);
+    scrollToTop();
   };
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { name, page } = this.state;
-    if (prevState.name !== name || prevState.page !== page) {
-      await this.fetchImages();
-    }
-  }
-
-  fetchImages = async () => {
-    const { name, page } = this.state;
-
-    this.setState({ isLoading: true });
-    try {
-      const images = await Api.images(name, page);
-      this.setState(prevState => ({
-        img: page === 1 ? images.hits : [...prevState.img, ...images.hits],
-        totalPages: Math.floor(images.totalHits / 12),
-        isLoading: false,
-      }));
-    } catch (error) {
-      this.setState({ isLoading: false });
-    }
-  };
-
-  onSubmit = name => {
-    this.setState({ name, page: 1 }, () => {
-      this.scrollToTop();
-    });
-  };
-
-  scrollToTop = () => {
+  const scrollToTop = () => {
     const scrollStep = -window.scrollY / 50;
 
     const scrollInterval = setInterval(() => {
@@ -60,40 +58,46 @@ export class App extends Component {
     }, 15);
   };
 
-  onClickModalOpen = (imgModal, tags) => {
-    this.setState({ modalImg: imgModal, modalTags: tags });
+  const onClickModalOpen = (imgModal, tags) => {
+    setModalImg(imgModal);
+    setModalTags(tags);
   };
 
-  onClickModalClose = () => {
-    this.setState({ modalImg: null, modalTags: '' });
+  const onClickModalClose = () => {
+    setModalImg(null);
+    setModalTags('');
   };
 
-  clickBtn = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const clickBtn = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  render() {
-    const { img, page, isLoading, totalPages, modalImg, modalTags } =
-      this.state;
-    return (
-      <div className={css.app}>
-        <SearchBar onSubmit={this.onSubmit} />
-        {modalImg && (
-          <Modal
-            onClose={this.onClickModalClose}
-            imgModal={modalImg}
-            modalTags={modalTags}
-          />
-        )}
-        <ImageGallery items={img} openModal={this.onClickModalOpen} />
-        <Button
-          onClick={this.clickBtn}
-          img={img}
-          totalPages={totalPages}
-          page={page}
+  return (
+    <div className={css.app}>
+      <SearchBar onSubmit={onSubmit} />
+      {modalImg && (
+        <Modal
+          onClose={onClickModalClose}
+          imgModal={modalImg}
+          modalTags={modalTags}
         />
-        {isLoading && <Loader isLoading={isLoading} />}
-      </div>
-    );
-  }
-}
+      )}
+      {hasSearched && (
+        <>
+          <ImageGallery items={img} openModal={onClickModalOpen} />
+          <Button
+            onClick={clickBtn}
+            img={img}
+            totalPages={totalPages}
+            page={page}
+          />
+        </>
+      )}
+      {isLoading && <Loader isLoading={isLoading} />}
+    </div>
+  );
+};
+
+export { App };
+
+export default App;
