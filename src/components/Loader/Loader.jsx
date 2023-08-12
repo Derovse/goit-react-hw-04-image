@@ -9,8 +9,8 @@ const Loader = ({ isLoading }) => {
         <div className="custom-loader">
           <Dna
             visible={true}
-            height="500"
-            width="500"
+            height={500}
+            width={500}
             ariaLabel="dna-loading"
             wrapperStyle={{
               position: 'fixed',
@@ -19,7 +19,7 @@ const Loader = ({ isLoading }) => {
               transform: 'translate(-50%, -50%)',
               zIndex: 9999,
             }}
-            wrapperClass="dna-wrapper"
+            wrapperClassName="dna-wrapper"
             colors={['#e15b64', '#f47e60', '#f8b26a', '#abbd81', '#849b87']}
           />
         </div>

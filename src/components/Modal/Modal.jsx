@@ -1,43 +1,40 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import css from './Modal.module.css';
 
-export class Modal extends Component {
-  handleKeyDown = e => {
+const Modal = ({ imgModal, onClose, modalTags }) => {
+  const handleKeyDown = e => {
     if (e.code === 'Escape') {
-      this.props.onClose();
+      onClose();
     }
   };
 
-  handleBackdropClick = e => {
+  const handleBackdropClick = e => {
     if (e.target === e.currentTarget) {
-      this.props.onClose();
+      onClose();
     }
   };
 
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-  }
-
-  render() {
-    return (
-      <div className={css.overlay} onClick={this.handleBackdropClick}>
-        <div className={css.customModal}>
-          <img
-            className={css.centeredImage}
-            src={this.props.imgModal}
-            alt={this.props.modalTags}
-            loading="lazy"
-          />
-        </div>
+  return (
+    <div className={css.overlay} onClick={handleBackdropClick}>
+      <div className={css.customModal}>
+        <img
+          className={css.centeredImage}
+          src={imgModal}
+          alt={modalTags}
+          loading="lazy"
+        />
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 Modal.propTypes = {
   imgModal: PropTypes.string.isRequired,
